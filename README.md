@@ -1,4 +1,6 @@
 
+---
+
 # Predicting Hospital Readmission for Diabetic Patients
 
 ## Project Overview
@@ -7,7 +9,7 @@ This project aims to predict hospital readmissions within 30 days for diabetic p
 1. **Identify the strongest predictors** of hospital readmission for diabetic patients.
 2. **Develop an accurate predictive model** using a limited set of features.
 
-The project employs machine learning techniques, including Decision Trees, XGBoost, and LightGBM, to model readmission risk and evaluate predictor importance. The final model achieves high recall and reasonable precision, making it valuable for healthcare applications.
+The project employs machine learning techniques, including Decision Trees, XGBoost, and LightGBM, to model readmission risk and evaluate predictor importance. The final model achieves high recall and reasonable precision, making it valuable for healthcare applications. Additionally, a Flask API and Docker containerization enable deployment, while Tableau visualizations enhance interpretability.
 
 ## Dataset Description
 The dataset, sourced from [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/Diabetes+130-US+hospitals+for+years+1999-2008), contains medical claims data for diabetic patients across 130 US hospitals from 1999–2008. It includes 101,766 encounters with 50 features.
@@ -42,7 +44,7 @@ The project follows a structured approach to analyze the dataset, identify predi
 ### Steps
 1. **Data Exploration**:
    - Analyzed dataset for missing values, distributions, and imbalances.
-   - Visualized relationships between features (e.g., time in hospital, number of medications) and readmission.
+   - Visualized relationships between features (e.g., time in hospital, number of medications) and readmission using Seaborn and Matplotlib.
 
 2. **Feature Engineering**:
    - Created new features like service_utilization (sum of outpatient, emergency, and inpatient visits).
@@ -62,6 +64,13 @@ The project follows a structured approach to analyze the dataset, identify predi
 4. **Final Model**:
    - Selected XGBoost with tuned hyperparameters for its balance of performance and interpretability.
    - Adjusted prediction threshold to prioritize recall ≥ 0.70 while maximizing precision.
+
+5. **Deployment**:
+   - Developed a Flask API to serve predictions.
+   - Containerized the application using Docker for scalable deployment.
+
+6. **Visualization**:
+   - Exported predictions to CSV for visualization in Tableau, enabling interactive dashboards.
 
 ### Models and Hyperparameters
 | **Model**       | **Best Hyperparameters**                                                                 | **Scoring Metric** |
@@ -102,6 +111,7 @@ Visualizations confirmed key relationships:
 - **Time in Hospital vs. Readmission**: Readmitted patients have slightly longer hospital stays (KDE plot).
 - **Age vs. Readmission**: Older patients (70–90 years) have higher readmission rates.
 - **Service Utilization**: Patients with higher utilization are more likely to be readmitted.
+- **Tableau Dashboards**: Interactive visualizations of predictions and feature relationships, exported via `predictions.csv`.
 
 ## Industry Standards and Achievements
 ### Industry Context
@@ -125,17 +135,22 @@ In healthcare, predicting hospital readmissions is critical for:
 | **PR-AUC**                  | Achieved 0.533, meeting the ≥0.50 benchmark.                                   | Strong performance in imbalanced settings, relevant for rare events like readmissions. |
 | **Key Predictors**          | Identified actionable predictors (e.g., inpatient visits, medication changes). | Enables hospitals to focus interventions on high-risk factors, improving outcomes.     |
 | **Model Efficiency**        | Used limited features (30) with high performance.                              | Aligns with industry need for interpretable, scalable models in resource-constrained settings. |
+| **Deployment**              | Flask API and Docker containerization enable scalable, real-time predictions.  | Facilitates integration into clinical workflows and EHR systems.                       |
+| **Visualization**           | Tableau dashboards provide actionable insights.                               | Enhances decision-making for clinicians and administrators.                           |
 
 ### Domain Impact
 - **Clinical Utility**: The model identifies 70% of patients at risk of readmission, enabling hospitals to implement targeted follow-up care, such as post-discharge monitoring or diabetes management programs.
 - **Cost Savings**: By reducing readmissions, hospitals can avoid HRRP penalties and lower the $41 billion cost burden associated with diabetic readmissions.
-- **Scalability**: The use of a limited feature set and interpretable predictors (e.g., service utilization) makes the model feasible for integration into electronic health record (EHR) systems.
+- **Scalability**: The Flask API and Docker setup, combined with a limited feature set, make the model feasible for integration into electronic health record (EHR) systems.
 - **Patient-Centric Care**: Focusing on predictors like medication changes highlights the need for better disease management, improving patient outcomes.
+- **Interpretability**: Tableau visualizations provide clinicians with clear, interactive insights into readmission risks and key predictors.
 
 ## Installation and Usage
 ### Prerequisites
-- Python 3.8+
-- Libraries: `pandas`, `numpy`, `scikit-learn`, `xgboost`, `lightgbm`, `imblearn`, `seaborn`, `matplotlib`
+- Python 3.9+
+- Docker (for containerized deployment)
+- Tableau (for visualization)
+- Libraries: `pandas`, `numpy`, `scikit-learn`, `xgboost`, `flask`, `imblearn`, `seaborn`, `matplotlib`
 
 ### Installation
 1. Clone the repository:
@@ -143,7 +158,7 @@ In healthcare, predicting hospital readmissions is critical for:
    git clone https://github.com/Vraj-Data-Scientist/prediction-on-hospital-readmission.git
    cd prediction-on-hospital-readmission
    ```
-2. Install dependencies:
+2. Install Python dependencies:
    ```bash
    pip install -r requirements.txt
    ```
@@ -156,12 +171,65 @@ In healthcare, predicting hospital readmissions is critical for:
    ```
 2. Open `prediction-on-hospital-readmission.ipynb` and run all cells to reproduce the analysis.
 
+### Flask API
+The project includes a Flask API for serving predictions, using the trained XGBoost model (`model.pkl`).
+
+#### Running the Flask API Locally
+1. Ensure dependencies are installed (`requirements.txt`).
+2. Run the Flask application:
+   ```bash
+   python app.py
+   ```
+3. The API will be available at `http://localhost:5000`.
+
+#### Making Predictions
+- **Endpoint**: `/predict` (POST)
+- **Input**: JSON array of feature dictionaries (see `test.json` for an example).
+- **Output**: JSON with predictions (0 or 1) and probabilities for readmission.
+- **Example Request**:
+  ```bash
+  curl -X POST http://localhost:5000/predict -H "Content-Type: application/json" -d @test.json
+  ```
+- **Example Response**:
+  ```json
+  {
+    "predictions": [0],
+    "probabilities": [0.123456]
+  }
+  ```
+- Logs are saved to `app.log` for debugging.
+
+### Docker Deployment
+The project includes a Dockerfile for containerized deployment.
+
+#### Building and Running the Docker Container
+1. Build the Docker image:
+   ```bash
+   docker build -t hospital-readmission-api .
+   ```
+2. Run the container:
+   ```bash
+   docker run -p 5000:5000 hospital-readmission-api
+   ```
+3. The API will be accessible at `http://localhost:5000`.
+
+#### Notes
+- The Dockerfile uses Python 3.9-slim for a lightweight image.
+- Ensure `model.pkl`, `app.py`, and `requirements.txt` are in the project directory.
+
+
+
 ## Future Work
 - **Incorporate Additional Features**: Include social determinants of health (e.g., income, access to care) to improve model performance.
-- **Real-Time Prediction**: Integrate the model into EHR systems for real-time risk scoring.
+- **Real-Time Prediction**: Enhance the Flask API for real-time integration with EHR systems.
 - **Threshold Optimization**: Explore ensemble methods to achieve precision ≥0.50 while maintaining recall ≥0.70.
 - **External Validation**: Test the model on newer datasets to ensure generalizability.
+- **Advanced Visualizations**: Develop dynamic Tableau dashboards for real-time monitoring of readmission risks.
 
 ## Acknowledgments
 - Dataset provided by the UCI Machine Learning Repository.
 - Inspired by the Hospital Readmissions Reduction Program and the need to improve diabetic patient outcomes.
+- Flask and Docker for enabling scalable deployment.
+- Tableau for providing powerful visualization capabilities.
+
+--- 
